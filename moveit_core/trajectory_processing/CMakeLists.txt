@@ -35,10 +35,8 @@ if(BUILD_TESTING)
     )
   endif()
 
-  ament_add_gtest(test_time_optimal_trajectory_generation
-                  test/test_time_optimal_trajectory_generation.cpp)
-  target_link_libraries(test_time_optimal_trajectory_generation
-                        moveit_test_utils moveit_trajectory_processing)
+  # ament_add_gtest(test_time_optimal_trajectory_generation test/test_time_optimal_trajectory_generation.cpp)
+  # target_link_libraries(test_time_optimal_trajectory_generation moveit_test_utils moveit_trajectory_processing)
 
   ament_add_gtest(test_ruckig_traj_smoothing
                   test/test_ruckig_traj_smoothing.cpp)

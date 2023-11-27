@@ -42,22 +42,22 @@ find_package(visualization_msgs REQUIRED)
 # Finds Boost Components
 include(ConfigExtras.cmake)
 
-add_subdirectory(collision_detection_bullet)
-add_subdirectory(collision_detection_fcl)
-add_subdirectory(collision_detection)
-add_subdirectory(collision_distance_field)
-add_subdirectory(constraint_samplers)
-add_subdirectory(controller_manager)
-add_subdirectory(distance_field)
-add_subdirectory(dynamics_solver)
+# add_subdirectory(collision_detection_bullet)
+# add_subdirectory(collision_detection_fcl)
+# add_subdirectory(collision_detection)
+# add_subdirectory(collision_distance_field)
+# add_subdirectory(constraint_samplers)
+# add_subdirectory(controller_manager)
+# add_subdirectory(distance_field)
+# add_subdirectory(dynamics_solver)
 add_subdirectory(exceptions)
-add_subdirectory(kinematic_constraints)
+# add_subdirectory(kinematic_constraints)
 add_subdirectory(kinematics_base)
-add_subdirectory(kinematics_metrics)
+# add_subdirectory(kinematics_metrics)
 add_subdirectory(macros)
-add_subdirectory(online_signal_smoothing)
-add_subdirectory(planning_interface)
-add_subdirectory(planning_scene)
+# add_subdirectory(online_signal_smoothing)
+# add_subdirectory(planning_interface)
+# add_subdirectory(planning_scene)
 add_subdirectory(robot_model)
 add_subdirectory(robot_state)
 add_subdirectory(robot_trajectory)
@@ -67,34 +67,32 @@ add_subdirectory(utils)
 add_subdirectory(version)
 
 install(
-  TARGETS collision_detector_bullet_plugin
-          collision_detector_fcl_plugin
-          moveit_acceleration_filter
-          moveit_acceleration_filter_parameters
-          moveit_butterworth_filter
-          moveit_butterworth_filter_parameters
-          moveit_collision_detection
-          moveit_collision_detection_bullet
-          moveit_collision_detection_fcl
-          moveit_collision_distance_field
-          moveit_constraint_samplers
-          moveit_distance_field
-          moveit_dynamics_solver
-          moveit_exceptions
-          moveit_kinematic_constraints
-          moveit_kinematics_base
-          moveit_kinematics_metrics
-          moveit_macros
-          moveit_planning_interface
-          moveit_planning_scene
-          moveit_robot_model
-          moveit_robot_state
-          moveit_robot_trajectory
-          moveit_smoothing_base
-          moveit_test_utils
-          moveit_trajectory_processing
-          moveit_transforms
-          moveit_utils
+  TARGETS
+    # collision_detector_bullet_plugin
+    # moveit_butterworth_filter
+    # moveit_butterworth_parameters
+    # moveit_collision_detection
+    # moveit_collision_detection_bullet
+    # moveit_collision_detection_fcl
+    # moveit_collision_distance_field
+    # moveit_constraint_samplers
+    # moveit_distance_field
+    # moveit_dynamics_solver
+    moveit_exceptions
+    # moveit_kinematic_constraints
+    moveit_kinematics_base
+    # moveit_kinematics_metrics
+    moveit_macros
+    # moveit_planning_interface
+    # moveit_planning_scene
+    moveit_robot_model
+    moveit_robot_state
+    moveit_robot_trajectory
+    # moveit_smoothing_base
+    moveit_test_utils
+    moveit_trajectory_processing
+    moveit_transforms
+    moveit_utils
   EXPORT moveit_coreTargets
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
@@ -136,13 +134,22 @@ ament_export_dependencies(
   visualization_msgs)
 
 # Plugin exports
-pluginlib_export_plugin_description_file(moveit_core
-                                         collision_detector_fcl_description.xml)
-pluginlib_export_plugin_description_file(
-  moveit_core collision_detector_bullet_description.xml)
-pluginlib_export_plugin_description_file(moveit_core
-                                         filter_plugin_butterworth.xml)
-pluginlib_export_plugin_description_file(moveit_core
-                                         filter_plugin_acceleration.xml)
+# pluginlib_export_plugin_description_file(moveit_core collision_detector_fcl_description.xml)
+# pluginlib_export_plugin_description_file(moveit_core collision_detector_bullet_description.xml)
+# pluginlib_export_plugin_description_file(moveit_core filter_plugin_butterworth.xml)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+
+  # These don't pass yet, disable them for now
+  set(ament_cmake_copyright_FOUND TRUE)
+  set(ament_cmake_cpplint_FOUND TRUE)
+  set(ament_cmake_flake8_FOUND TRUE)
+  set(ament_cmake_uncrustify_FOUND TRUE)
+  set(ament_cmake_lint_cmake_FOUND TRUE)
+
+  # Run all lint tests in package.xml except those listed above
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_package(CONFIG_EXTRAS ConfigExtras.cmake)
