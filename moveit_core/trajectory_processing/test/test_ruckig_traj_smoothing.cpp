@@ -79,6 +79,43 @@ TEST_F(RuckigTests, basic_trajectory)
       smoother_.applySmoothing(*trajectory_, 1.0 /* max vel scaling factor */, 1.0 /* max accel scaling factor */));
 }
 
+TEST_F(RuckigTests, longer_trajectory)
+{
+  moveit::core::RobotState robot_state(robot_model_);
+  robot_state.setToDefaultValues();
+  robot_state.zeroVelocities();
+  robot_state.zeroAccelerations();
+  // First waypoint is default joint positions
+  trajectory_->addSuffixWayPoint(robot_state, DEFAULT_TIMESTEP);
+
+  // add step wise change to waypoints
+  std::vector<double> joint_positions;
+  for (int i = 0; i < 10; i++)
+  {
+    robot_state.copyJointGroupPositions(JOINT_GROUP, joint_positions);
+    joint_positions.at(0) += 0.1 * (i % 2 - 0.5);
+    robot_state.setJointGroupPositions(JOINT_GROUP, joint_positions);
+    trajectory_->addSuffixWayPoint(robot_state, DEFAULT_TIMESTEP);
+  }
+
+  std::cout << "Original trajectory:" << std::endl;
+  for (size_t i = 0; i < trajectory_->getWayPointCount(); i++)
+  {
+    trajectory_->getWayPoint(i).copyJointGroupPositions(JOINT_GROUP, joint_positions);
+    std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) << ", p: " << joint_positions.at(0) << std::endl;
+  }
+
+  EXPECT_TRUE(smoother_.applySmoothing(*trajectory_, 1.0 /* max vel scaling factor */,
+                                       1.0 /* max accel scaling factor */, true, 0.01));
+
+  std::cout << "After ruckig smoothing:" << std::endl;
+  for (size_t i = 0; i < trajectory_->getWayPointCount(); i++)
+  {
+    trajectory_->getWayPoint(i).copyJointGroupPositions(JOINT_GROUP, joint_positions);
+    std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) << ", p: " << joint_positions.at(0) << std::endl;
+  }
+}
+
 TEST_F(RuckigTests, basic_trajectory_with_custom_limits)
 {
   // Check the version of computeTimeStamps that takes custom velocity/acceleration limits
