@@ -83,6 +83,7 @@ TEST_F(RuckigTests, basic_trajectory)
   EXPECT_TRUE(
       smoother_.applySmoothing(*trajectory_, 1.0 /* max vel scaling factor */, 1.0 /* max accel scaling factor */));
 }
+#endif
 
 TEST_F(RuckigTests, longer_trajectory)
 {
@@ -152,7 +153,6 @@ TEST_F(RuckigTests, longer_trajectory)
   }
   file2.close();
 }
-#endif
 
 TEST_F(RuckigTests, longer_trajectory_totg)
 {
