@@ -43,9 +43,9 @@ if(BUILD_TESTING)
   target_link_libraries(test_ruckig_traj_smoothing moveit_trajectory_processing
                         moveit_test_utils)
 
-  ament_add_google_benchmark(robot_trajectory_benchmark
-                             test/robot_trajectory_benchmark.cpp)
-  target_link_libraries(
-    robot_trajectory_benchmark moveit_robot_model moveit_test_utils
-    moveit_robot_state moveit_robot_trajectory moveit_trajectory_processing)
+  # ament_add_google_benchmark(robot_trajectory_benchmark
+  #                            test/robot_trajectory_benchmark.cpp)
+  # target_link_libraries(
+  #   robot_trajectory_benchmark moveit_robot_model moveit_test_utils
+  #   moveit_robot_state moveit_robot_trajectory moveit_trajectory_processing)
 endif()

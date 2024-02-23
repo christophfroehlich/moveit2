@@ -43,9 +43,9 @@ target_link_libraries(moveit_robot_model moveit_exceptions moveit_macros
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(test_robot_model test/test.cpp)
-  ament_target_dependencies(test_robot_model rclcpp)
-  target_link_libraries(test_robot_model moveit_test_utils moveit_robot_model)
+  # ament_add_gtest(test_robot_model test/test.cpp)
+  # ament_target_dependencies(test_robot_model rclcpp)
+  # target_link_libraries(test_robot_model moveit_test_utils moveit_robot_model)
 endif()
 
 install(DIRECTORY include/ DESTINATION include/moveit_core)

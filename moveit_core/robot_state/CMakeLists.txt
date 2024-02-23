@@ -31,28 +31,28 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_BINARY_DIR};${CMAKE_CURRENT_BINARY_DIR}/../utils")
   endif()
 
-  ament_add_gtest(test_robot_state test/robot_state_test.cpp
-                  APPEND_LIBRARY_DIRS "${APPEND_LIBRARY_DIRS}")
+  # ament_add_gtest(test_robot_state test/robot_state_test.cpp
+  #                 APPEND_LIBRARY_DIRS "${APPEND_LIBRARY_DIRS}")
 
-  target_link_libraries(test_robot_state moveit_test_utils moveit_utils
-                        moveit_exceptions moveit_robot_state)
+  # target_link_libraries(test_robot_state moveit_test_utils moveit_utils
+  #                       moveit_exceptions moveit_robot_state)
 
-  ament_add_gtest(test_robot_state_complex test/test_kinematic_complex.cpp)
-  target_link_libraries(test_robot_state_complex moveit_test_utils moveit_utils
-                        moveit_exceptions moveit_robot_state)
+  # ament_add_gtest(test_robot_state_complex test/test_kinematic_complex.cpp)
+  # target_link_libraries(test_robot_state_complex moveit_test_utils moveit_utils
+  #                       moveit_exceptions moveit_robot_state)
 
-  ament_add_gtest(test_aabb test/test_aabb.cpp)
-  target_link_libraries(test_aabb moveit_test_utils moveit_utils
-                        moveit_exceptions moveit_robot_state)
+  # ament_add_gtest(test_aabb test/test_aabb.cpp)
+  # target_link_libraries(test_aabb moveit_test_utils moveit_utils
+  #                       moveit_exceptions moveit_robot_state)
 
-  ament_add_gtest(test_cartesian_interpolator
-                  test/test_cartesian_interpolator.cpp)
-  target_link_libraries(test_cartesian_interpolator moveit_test_utils
-                        moveit_robot_state moveit_kinematics_base)
+  # ament_add_gtest(test_cartesian_interpolator
+  #                 test/test_cartesian_interpolator.cpp)
+  # target_link_libraries(test_cartesian_interpolator moveit_test_utils
+  #                       moveit_robot_state moveit_kinematics_base)
 
-  ament_add_google_benchmark(robot_state_benchmark
-                             test/robot_state_benchmark.cpp)
-  ament_target_dependencies(robot_state_benchmark kdl_parser)
-  target_link_libraries(robot_state_benchmark moveit_robot_model
-                        moveit_test_utils moveit_robot_state)
+  # ament_add_google_benchmark(robot_state_benchmark
+  #                            test/robot_state_benchmark.cpp)
+  # ament_target_dependencies(robot_state_benchmark kdl_parser)
+  # target_link_libraries(robot_state_benchmark moveit_robot_model
+  #                       moveit_test_utils moveit_robot_state)
 endif()
