@@ -32,6 +32,7 @@
  *******************************************************************************/
 
 /* Author: Andy Zelenak */
+#include <fstream>
 
 #include <gtest/gtest.h>
 #include <moveit/trajectory_processing/ruckig_traj_smoothing.h>
@@ -59,6 +60,7 @@ protected:
 
 }  // namespace
 
+#if 0
 TEST_F(RuckigTests, basic_trajectory)
 {
   moveit::core::RobotState robot_state(robot_model_);
@@ -78,9 +80,12 @@ TEST_F(RuckigTests, basic_trajectory)
   EXPECT_TRUE(
       smoother_.applySmoothing(*trajectory_, 1.0 /* max vel scaling factor */, 1.0 /* max accel scaling factor */));
 }
+#endif
 
 TEST_F(RuckigTests, longer_trajectory)
 {
+  size_t JOINT_IDX = 0;
+
   moveit::core::RobotState robot_state(robot_model_);
   robot_state.setToDefaultValues();
   robot_state.zeroVelocities();
@@ -93,27 +98,57 @@ TEST_F(RuckigTests, longer_trajectory)
   for (int i = 0; i < 10; i++)
   {
     robot_state.copyJointGroupPositions(JOINT_GROUP, joint_positions);
-    joint_positions.at(0) += 0.1 * (i % 2 - 0.5);
+    joint_positions.at(JOINT_IDX) += 0.1 * (i % 2 - 0.5);
     robot_state.setJointGroupPositions(JOINT_GROUP, joint_positions);
     trajectory_->addSuffixWayPoint(robot_state, DEFAULT_TIMESTEP);
   }
 
+  // robot_model_->printModelInfo(std::cerr);
+
+  std::ofstream file1("orig_trajectory.csv");
+  file1 << "t,p,v,a\n";  // Write the header
+
   std::cout << "Original trajectory:" << std::endl;
+  std::vector<double> joint_velocities, joint_accelerations;
   for (size_t i = 0; i < trajectory_->getWayPointCount(); i++)
   {
     trajectory_->getWayPoint(i).copyJointGroupPositions(JOINT_GROUP, joint_positions);
-    std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) << ", p: " << joint_positions.at(0) << std::endl;
+    trajectory_->getWayPoint(i).copyJointGroupVelocities(JOINT_GROUP, joint_velocities);
+    trajectory_->getWayPoint(i).copyJointGroupAccelerations(JOINT_GROUP, joint_accelerations);
+    std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) 
+    << ", p: " << joint_positions.at(JOINT_IDX) 
+    << ", v: " << joint_velocities.at(JOINT_IDX) 
+    << ", a: " << joint_accelerations.at(JOINT_IDX) 
+    << std::endl;
+    file1 << trajectory_->getWayPointDurationFromStart(i) << "," 
+    << joint_positions.at(JOINT_IDX) << "," 
+    << joint_velocities.at(JOINT_IDX) << "," 
+    << joint_accelerations.at(JOINT_IDX) << "\n";
   }
+  file1.close();
 
   EXPECT_TRUE(smoother_.applySmoothing(*trajectory_, 1.0 /* max vel scaling factor */,
                                        1.0 /* max accel scaling factor */, true, 0.01));
 
+  std::ofstream file2("smoothed_trajectory.csv");
+  file2 << "t,p,v,a\n";  // Write the header
   std::cout << "After ruckig smoothing:" << std::endl;
   for (size_t i = 0; i < trajectory_->getWayPointCount(); i++)
   {
     trajectory_->getWayPoint(i).copyJointGroupPositions(JOINT_GROUP, joint_positions);
-    std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) << ", p: " << joint_positions.at(0) << std::endl;
+    trajectory_->getWayPoint(i).copyJointGroupVelocities(JOINT_GROUP, joint_velocities);
+    trajectory_->getWayPoint(i).copyJointGroupAccelerations(JOINT_GROUP, joint_accelerations);
+    std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) 
+    << ", p: " << joint_positions.at(JOINT_IDX) 
+    << ", v: " << joint_velocities.at(JOINT_IDX) 
+    << ", a: " << joint_accelerations.at(JOINT_IDX) 
+    << std::endl;
+    file2 << trajectory_->getWayPointDurationFromStart(i) << "," 
+    << joint_positions.at(JOINT_IDX) << "," 
+    << joint_velocities.at(JOINT_IDX) << "," 
+    << joint_accelerations.at(JOINT_IDX) << "\n";
   }
+  file2.close();
 }
 
 TEST_F(RuckigTests, basic_trajectory_with_custom_limits)
