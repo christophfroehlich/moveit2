@@ -219,7 +219,7 @@ TEST_F(RuckigTests, longer_trajectory_totg)
   ASSERT_TRUE(totg.computeTimeStamps(*trajectory_, vel_limits, accel_limits)) << "Failed to compute time stamps";
 
   std::ofstream file_totg("totg_trajectory.csv");
-  file_totg << "totg/t,totg/p,totg/v,totg/a,totg/j\n";  // Write the header
+  file_totg << "t,p,v,a,j\n";  // Write the header
   std::cout << "After TOTG parameterization:" << std::endl;
   double old_acc = 0.0;
   for (size_t i = 0; i < trajectory_->getWayPointCount(); i++)
@@ -227,7 +227,7 @@ TEST_F(RuckigTests, longer_trajectory_totg)
     trajectory_->getWayPoint(i).copyJointGroupPositions(JOINT_GROUP, joint_positions);
     trajectory_->getWayPoint(i).copyJointGroupVelocities(JOINT_GROUP, joint_velocities);
     trajectory_->getWayPoint(i).copyJointGroupAccelerations(JOINT_GROUP, joint_accelerations);
-    double jerk = (joint_accelerations.at(JOINT_IDX) - old_acc) / DEFAULT_TIMESTEP;
+    double jerk = i > 0 ? (joint_accelerations.at(JOINT_IDX) - old_acc) / trajectory_->getWayPointDurationFromPrevious(i) : 0.0;    
     std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) 
     << ", p: " << joint_positions.at(JOINT_IDX) 
     << ", v: " << joint_velocities.at(JOINT_IDX) 
@@ -248,7 +248,7 @@ TEST_F(RuckigTests, longer_trajectory_totg)
   EXPECT_TRUE(smoother_.applySmoothing(*trajectory_, vel_limits, accel_limits, jerk_limits));
 
   std::ofstream file_ruckig("ruckig_trajectory.csv");
-  file_ruckig << "ruckig/t,ruckig/p,ruckig/v,ruckig/a,ruckig/j\n";  // Write the header
+  file_ruckig << "t,p,v,a,j\n";  // Write the header
   std::cout << "After ruckig smoothing:" << std::endl;
   old_acc = 0.0;
   for (size_t i = 0; i < trajectory_->getWayPointCount(); i++)
@@ -256,7 +256,7 @@ TEST_F(RuckigTests, longer_trajectory_totg)
     trajectory_->getWayPoint(i).copyJointGroupPositions(JOINT_GROUP, joint_positions);
     trajectory_->getWayPoint(i).copyJointGroupVelocities(JOINT_GROUP, joint_velocities);
     trajectory_->getWayPoint(i).copyJointGroupAccelerations(JOINT_GROUP, joint_accelerations);
-    double jerk = (joint_accelerations.at(JOINT_IDX) - old_acc) / DEFAULT_TIMESTEP;
+    double jerk = i > 0 ? (joint_accelerations.at(JOINT_IDX) - old_acc) / trajectory_->getWayPointDurationFromPrevious(i) : 0.0;    
     std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) 
     << ", p: " << joint_positions.at(JOINT_IDX) 
     << ", v: " << joint_velocities.at(JOINT_IDX) 
