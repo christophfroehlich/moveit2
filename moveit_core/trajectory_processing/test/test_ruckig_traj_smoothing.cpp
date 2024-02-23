@@ -36,8 +36,11 @@
 
 #include <gtest/gtest.h>
 #include <moveit/trajectory_processing/ruckig_traj_smoothing.h>
+#include <moveit/trajectory_processing/time_optimal_trajectory_generation.h>
 #include <moveit/robot_state/robot_state.h>
 #include <moveit/utils/robot_model_test_utils.h>
+
+using trajectory_processing::TimeOptimalTrajectoryGeneration;
 
 namespace
 {
@@ -80,7 +83,6 @@ TEST_F(RuckigTests, basic_trajectory)
   EXPECT_TRUE(
       smoother_.applySmoothing(*trajectory_, 1.0 /* max vel scaling factor */, 1.0 /* max accel scaling factor */));
 }
-#endif
 
 TEST_F(RuckigTests, longer_trajectory)
 {
@@ -149,6 +151,127 @@ TEST_F(RuckigTests, longer_trajectory)
     << joint_accelerations.at(JOINT_IDX) << "\n";
   }
   file2.close();
+}
+#endif
+
+TEST_F(RuckigTests, longer_trajectory_totg)
+{
+  size_t JOINT_IDX = 0;
+
+  // Custom velocity & acceleration limits for some joints
+  std::unordered_map<std::string, double> vel_limits{ { "panda_joint1", 1.3 }, { "panda_joint2", 2.3 },
+                                                      { "panda_joint3", 3.3 }, { "panda_joint4", 4.3 },
+                                                      { "panda_joint5", 5.3 }, { "panda_joint6", 6.3 },
+                                                      { "panda_joint7", 7.3 } };
+  std::unordered_map<std::string, double> accel_limits{ { "panda_joint1", 1.5 }, { "panda_joint2", 2.3 },
+                                                        { "panda_joint3", 3.3 }, { "panda_joint4", 4.3 },
+                                                        { "panda_joint5", 5.3 }, { "panda_joint6", 6.3 },
+                                                        { "panda_joint7", 7.3 } };
+  std::unordered_map<std::string, double> jerk_limits{ { "panda_joint1", 1.0 }, { "panda_joint2", 2.3 },
+                                                        { "panda_joint3", 3.3 }, { "panda_joint4", 4.3 },
+                                                        { "panda_joint5", 5.3 }, { "panda_joint6", 6.3 },
+                                                        { "panda_joint7", 7.3 } };
+
+  moveit::core::RobotState robot_state(robot_model_);
+  robot_state.setToDefaultValues();
+  robot_state.zeroVelocities();
+  robot_state.zeroAccelerations();
+  // First waypoint is default joint positions
+  trajectory_->addSuffixWayPoint(robot_state, DEFAULT_TIMESTEP);
+
+  // add step wise change to waypoints
+  std::vector<double> joint_positions;
+  for (int i = 0; i < 10; i++)
+  {
+    robot_state.copyJointGroupPositions(JOINT_GROUP, joint_positions);
+    joint_positions.at(JOINT_IDX) += 0.1 * (i % 2 - 0.5);
+    joint_positions.at(JOINT_IDX+1) += 0.1 * (i % 4 - 2.0);
+    robot_state.setJointGroupPositions(JOINT_GROUP, joint_positions);
+    trajectory_->addSuffixWayPoint(robot_state, DEFAULT_TIMESTEP);
+  }
+
+  robot_model_->printModelInfo(std::cerr);
+
+  std::ofstream file1("orig_trajectory.csv");
+  file1 << "t,p,v,a\n";  // Write the header
+
+  std::cout << "Original trajectory:" << std::endl;
+  std::vector<double> joint_velocities, joint_accelerations;
+  for (size_t i = 0; i < trajectory_->getWayPointCount(); i++)
+  {
+    trajectory_->getWayPoint(i).copyJointGroupPositions(JOINT_GROUP, joint_positions);
+    trajectory_->getWayPoint(i).copyJointGroupVelocities(JOINT_GROUP, joint_velocities);
+    trajectory_->getWayPoint(i).copyJointGroupAccelerations(JOINT_GROUP, joint_accelerations);
+    std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) 
+    << ", p: " << joint_positions.at(JOINT_IDX) 
+    << ", v: " << joint_velocities.at(JOINT_IDX) 
+    << ", a: " << joint_accelerations.at(JOINT_IDX) 
+    << std::endl;
+    file1 << trajectory_->getWayPointDurationFromStart(i) << "," 
+    << joint_positions.at(JOINT_IDX) << "," 
+    << joint_velocities.at(JOINT_IDX) << "," 
+    << joint_accelerations.at(JOINT_IDX) << "\n";
+  }
+  file1.close();
+
+  // ####### TOTG ######## 
+  TimeOptimalTrajectoryGeneration totg;
+  ASSERT_TRUE(totg.computeTimeStamps(*trajectory_, vel_limits, accel_limits)) << "Failed to compute time stamps";
+
+  std::ofstream file_totg("totg_trajectory.csv");
+  file_totg << "totg/t,totg/p,totg/v,totg/a,totg/j\n";  // Write the header
+  std::cout << "After TOTG parameterization:" << std::endl;
+  double old_acc = 0.0;
+  for (size_t i = 0; i < trajectory_->getWayPointCount(); i++)
+  {
+    trajectory_->getWayPoint(i).copyJointGroupPositions(JOINT_GROUP, joint_positions);
+    trajectory_->getWayPoint(i).copyJointGroupVelocities(JOINT_GROUP, joint_velocities);
+    trajectory_->getWayPoint(i).copyJointGroupAccelerations(JOINT_GROUP, joint_accelerations);
+    double jerk = (joint_accelerations.at(JOINT_IDX) - old_acc) / DEFAULT_TIMESTEP;
+    std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) 
+    << ", p: " << joint_positions.at(JOINT_IDX) 
+    << ", v: " << joint_velocities.at(JOINT_IDX) 
+    << ", a: " << joint_accelerations.at(JOINT_IDX) 
+    << ", j: " << jerk 
+    << std::endl;
+    file_totg << trajectory_->getWayPointDurationFromStart(i) << "," 
+    << joint_positions.at(JOINT_IDX) << "," 
+    << joint_velocities.at(JOINT_IDX) << "," 
+    << joint_accelerations.at(JOINT_IDX) << "," 
+    << jerk << "\n";
+
+    old_acc = joint_accelerations.at(JOINT_IDX) ;
+  }
+  file_totg.close();
+
+  // ####### ruckig ######## 
+  EXPECT_TRUE(smoother_.applySmoothing(*trajectory_, vel_limits, accel_limits, jerk_limits));
+
+  std::ofstream file_ruckig("ruckig_trajectory.csv");
+  file_ruckig << "ruckig/t,ruckig/p,ruckig/v,ruckig/a,ruckig/j\n";  // Write the header
+  std::cout << "After ruckig smoothing:" << std::endl;
+  old_acc = 0.0;
+  for (size_t i = 0; i < trajectory_->getWayPointCount(); i++)
+  {
+    trajectory_->getWayPoint(i).copyJointGroupPositions(JOINT_GROUP, joint_positions);
+    trajectory_->getWayPoint(i).copyJointGroupVelocities(JOINT_GROUP, joint_velocities);
+    trajectory_->getWayPoint(i).copyJointGroupAccelerations(JOINT_GROUP, joint_accelerations);
+    double jerk = (joint_accelerations.at(JOINT_IDX) - old_acc) / DEFAULT_TIMESTEP;
+    std::cout << "t: " << trajectory_->getWayPointDurationFromStart(i) 
+    << ", p: " << joint_positions.at(JOINT_IDX) 
+    << ", v: " << joint_velocities.at(JOINT_IDX) 
+    << ", a: " << joint_accelerations.at(JOINT_IDX) 
+    << ", j: " << jerk 
+    << std::endl;
+    file_ruckig << trajectory_->getWayPointDurationFromStart(i) << "," 
+    << joint_positions.at(JOINT_IDX) << "," 
+    << joint_velocities.at(JOINT_IDX) << "," 
+    << joint_accelerations.at(JOINT_IDX) << "," 
+    << jerk << "\n";
+
+    old_acc = joint_accelerations.at(JOINT_IDX) ;
+  }
+  file_ruckig.close();
 }
 
 TEST_F(RuckigTests, basic_trajectory_with_custom_limits)
